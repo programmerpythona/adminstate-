@@ -3,404 +3,469 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Parallelogram — сверхбезопасный веб‑мессенджер (E2EE)</title>
-  <meta name="description" content="Parallelogram: end‑to‑end шифрование в браузере, peer‑to‑peer через WebRTC с ручным обменом SDP, локальный сейф для заметок." />
+  <title>MARKT∞ — Код, боты, анимации</title>
+  <meta name="description" content="Маркетплейс цифровых услуг: код сайта, телеграм‑боты, анимации, исправление ошибок. Супер‑дизайн, плавные анимации и корзина с уникальным ID." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{
-      --bg:#0b0e13;--panel:#121826;--panel-2:#0e1420;--accent:#6ee7ff;--accent-2:#9b8cff;--text:#e6edf7;--muted:#96a1b3;--danger:#ff6b6b;--ok:#4ade80;
-      --border:rgba(255,255,255,.08);--shadow:0 10px 30px rgba(0,0,0,.35);
+    :root{--ring:255 255 255 / .18;}
+    html,body{height:100%;}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,'Noto Sans',sans-serif;}
+    /* Animated gradient background */
+    .bg-aurora{
+      background: radial-gradient(60% 100% at 20% 0%, rgba(99,102,241,.35) 0%, rgba(99,102,241,0) 55%),
+                  radial-gradient(60% 100% at 80% 20%, rgba(56,189,248,.35) 0%, rgba(56,189,248,0) 55%),
+                  radial-gradient(50% 100% at 50% 100%, rgba(236,72,153,.35) 0%, rgba(236,72,153,0) 60%),
+                  linear-gradient(180deg, #0b1220 0%, #0a0f1a 100%);
+      animation: shift 18s ease-in-out infinite alternate;
+      background-size: 140% 140%;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;background:radial-gradient(1200px 800px at 80% -10%, rgba(110,231,255,.12), transparent 60%),
-                     radial-gradient(900px 600px at -10% 120%, rgba(155,140,255,.12), transparent 60%),
-                     var(--bg);color:var(--text);font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji"}
-    .app{display:grid;grid-template-columns:320px 1fr 360px;grid-template-rows:auto 1fr;gap:0;height:100vh}
-    header{grid-column:1/4;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);backdrop-filter:saturate(120%) blur(6px);position:sticky;top:0;z-index:2}
-    header h1{margin:0;font-size:16px;letter-spacing:.3px;display:flex;align-items:center;gap:10px}
-    header h1 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok)}
-    header .actions{display:flex;gap:10px}
-    .btn{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:12px;cursor:pointer}
-    .btn:hover{border-color:rgba(255,255,255,.15)}
-    .btn.primary{background:linear-gradient(180deg, rgba(110,231,255,.18), rgba(110,231,255,.06));border-color:rgba(110,231,255,.35)}
-    .btn.danger{background:linear-gradient(180deg, rgba(255,107,107,.18), rgba(255,107,107,.06));border-color:rgba(255,107,107,.35)}
-
-    .sidebar{border-right:1px solid var(--border);background:linear-gradient(180deg, rgba(255,255,255,.02), transparent), var(--panel);display:flex;flex-direction:column;min-width:300px}
-    .sidebar .search{padding:12px;border-bottom:1px solid var(--border)}
-    .input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel-2);color:var(--text)}
-    .list{overflow:auto}
-    .chat-item{display:flex;gap:10px;padding:12px;border-bottom:1px solid var(--border);cursor:pointer}
-    .chat-item:hover{background:rgba(255,255,255,.03)}
-    .avatar{width:36px;height:36px;border-radius:11px;background:linear-gradient(45deg, var(--accent), var(--accent-2));box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
-    .meta{display:flex;flex-direction:column;gap:3px;flex:1}
-    .row{display:flex;justify-content:space-between;gap:8px}
-    .name{font-weight:600}
-    .preview{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .badge{background:var(--danger);padding:0 6px;border-radius:8px;font-size:11px}
-
-    .chat{display:flex;flex-direction:column;height:100%;}
-    .chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-    .safety{color:var(--muted);font-size:12px}
-    .msgs{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:10px}
-    .bubble{max-width:70%;padding:10px 12px;border-radius:12px;box-shadow:var(--shadow)}
-    .me{align-self:flex-end;background:linear-gradient(180deg, rgba(110,231,255,.18), rgba(110,231,255,.06));border:1px solid rgba(110,231,255,.25)}
-    .them{align-self:flex-start;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid var(--border)}
-    .time{display:block;color:var(--muted);font-size:11px;margin-top:6px}
-    .composer{display:flex;gap:10px;padding:12px;border-top:1px solid var(--border)}
-    .composer textarea{flex:1;min-height:46px;max-height:150px;resize:vertical}
-
-    .right{border-left:1px solid var(--border);background:linear-gradient(180deg, rgba(255,255,255,.02), transparent), var(--panel);display:flex;flex-direction:column}
-    .card{padding:14px 14px;border-bottom:1px solid var(--border)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
-    .hint{font-size:12px;color:var(--muted)}
-
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .hidden{display:none}
-    .ok{color:var(--ok)}
-    .danger{color:var(--danger)}
-
-    @media (max-width:1100px){.app{grid-template-columns: 1fr}.sidebar{display:none}.right{display:none}}
+    @keyframes shift{0%{background-position:0% 0%} 100%{background-position:100% 100%}}
+    /* Glass card */
+    .glass{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 10px 40px rgba(0,0,0,.25);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+    /* Reveal */
+    .reveal{opacity:0; transform:translateY(16px); transition:all .7s cubic-bezier(.2,.8,.2,1)}
+    .reveal.in{opacity:1; transform:none}
+    /* Floating badge glow */
+    .glow{box-shadow:0 0 0 2px rgba(255,255,255,.06), 0 0 30px rgba(56,189,248,.3)}
+    /* Pretty scrollbars */
+    ::-webkit-scrollbar{height:10px;width:10px}
+    ::-webkit-scrollbar-track{background:rgba(255,255,255,.04)}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(99,102,241,.7),rgba(56,189,248,.7));border-radius:999px}
+    /* Button press ripple */
+    .ripple{position:relative;overflow:hidden}
+    .ripple:after{content:"";position:absolute;border-radius:999px;inset:auto auto 50% 50%;width:10px;height:10px;background:rgba(255,255,255,.5);transform:translate(-50%,-50%) scale(0);opacity:0;}
+    .ripple:active:after{animation:rip .6s ease-out}
+    @keyframes rip{0%{transform:translate(-50%,-50%) scale(0);opacity:.7}100%{transform:translate(-50%,-50%) scale(16);opacity:0}}
   </style>
 </head>
-<body>
-  <div class="app">
-    <header>
-      <h1><span class="dot" id="status-dot"></span> Parallelogram — E2EE</h1>
-      <div class="actions">
-        <button class="btn" id="btn-export-pub">Показать мой публичный ключ</button>
-        <button class="btn primary" id="btn-new-session">Новая P2P‑сессия</button>
-        <button class="btn danger" id="btn-lock">Заблокировать</button>
+<body class="bg-aurora text-white selection:bg-fuchsia-500/60 selection:text-white">
+  <!-- HEADER -->
+  <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/5 border-b border-white/10">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-4">
+      <a href="#" class="flex items-center gap-2 group">
+        <span class="grid place-items-center w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-500 via-sky-400 to-fuchsia-500 shadow-lg shadow-sky-500/20">
+          <!-- infinity icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 12c2.5-4 6-4 9 0s6.5 4 9 0"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 12c2.5 4 6 4 9 0s6.5-4 9 0"/></svg>
+        </span>
+        <span class="text-lg font-black tracking-tight">MARKT∞</span>
+      </a>
+      <nav class="ml-auto hidden sm:flex items-center gap-6 text-sm text-white/80">
+        <a href="#catalog" class="hover:text-white">Каталог</a>
+        <a href="#how" class="hover:text-white">Как это работает</a>
+        <a href="#contact" class="hover:text-white">Контакты</a>
+        <button id="cartBtn" class="relative inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 transition px-3 py-1.5 ripple">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 3h2l.5 2M7 13h10l3-7H6.5M7 13l-1.5-8M7 13l-2 9m12-9l-2 9M9 22a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/></svg>
+          <span>Корзина</span>
+          <span id="cartCount" class="absolute -top-2 -right-2 text-xs bg-sky-500 text-white px-1.5 py-0.5 rounded-full glow">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="relative overflow-hidden">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 pb-12">
+      <div class="grid lg:grid-cols-2 gap-10 items-center">
+        <div class="reveal">
+          <h1 class="text-4xl sm:text-6xl font-black leading-tight">
+            Самый <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-300 to-fuchsia-400">крутой</span> маркетплейс цифровых услуг
+          </h1>
+          <p class="mt-4 text-white/80 max-w-xl">Собирайте в корзину: код сайта, Telegram‑ботов, анимации, исправление ошибок и многое другое. Каждая корзина получает <span class="font-semibold">уникальный ID</span> вида <code class="px-1.5 py-0.5 rounded bg-white/10">00001</code> — просто укажите его в письме, и мы всё найдём.</p>
+          <div class="mt-8 flex flex-wrap items-center gap-3">
+            <a href="#catalog" class="rounded-2xl bg-gradient-to-r from-indigo-500 to-sky-400 hover:from-indigo-400 hover:to-sky-300 px-5 py-3 font-semibold shadow-lg shadow-indigo-700/30 ripple">В каталог</a>
+            <button id="showCartTop" class="rounded-2xl bg-white/10 hover:bg-white/15 px-5 py-3 font-semibold ripple">Открыть корзину</button>
+          </div>
+          <div id="cartIdBadge" class="mt-6 inline-flex items-center gap-2 glass px-3 py-1.5 rounded-xl text-sm">
+            <span class="opacity-70">ID вашей корзины:</span>
+            <span class="font-mono tracking-widest text-sky-300 font-bold" id="cartIdText">00000</span>
+          </div>
+        </div>
+        <div class="relative h-72 sm:h-96 lg:h-[28rem] reveal">
+          <!-- Decorative 3D-ish cards -->
+          <div class="absolute inset-0 grid place-items-center">
+            <div class="relative w-full max-w-md">
+              <div class="absolute -top-6 -left-8 rotate-[-6deg] glass rounded-3xl p-5 border border-white/10 backdrop-blur-lg">
+                <div class="text-xs text-white/70">Пакет</div>
+                <div class="text-lg font-bold">Telegram‑бот + Оплата</div>
+                <div class="mt-2 text-white/70">От 499€ • 7–10 дней</div>
+              </div>
+              <div class="absolute top-24 -right-10 rotate-[5deg] glass rounded-3xl p-5 border border-white/10">
+                <div class="text-xs text-white/70">Услуга</div>
+                <div class="text-lg font-bold">Анимации для сайта</div>
+                <div class="mt-2 text-white/70">GSAP/Lottie • Motion UI</div>
+              </div>
+              <div class="absolute bottom-6 left-8 rotate-[1deg] glass rounded-3xl p-5 border border-white/10">
+                <div class="text-xs text-white/70">Запрос</div>
+                <div class="text-lg font-bold">Исправление ошибок</div>
+                <div class="mt-2 text-white/70">React / Python / Node</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </header>
+    </div>
+  </section>
 
-    <!-- ЧАТ‑ЛИСТ -->
-    <aside class="sidebar">
-      <div class="search"><input class="input" id="search" placeholder="Поиск…" /></div>
-      <div class="list" id="chat-list"></div>
-    </aside>
-
-    <!-- ОСНОВНОЙ ЧАТ -->
-    <main class="chat">
-      <div class="chat-header">
+  <!-- CATALOG -->
+  <section id="catalog" class="py-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 mb-6">
         <div>
-          <div id="chat-title" class="name">Нет соединения</div>
-          <div class="safety">Проверочный отпечаток: <span id="safety-num" class="mono">—</span></div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold">Каталог услуг</h2>
+          <p class="text-white/70">Добавляйте позиции, формируйте корзину и оформляйте заказ письмом или через GitHub.</p>
         </div>
-        <div class="safety" id="rtc-state">WebRTC: —</div>
-      </div>
-      <div class="msgs" id="msgs"></div>
-      <div class="composer">
-        <textarea class="input" id="msg-input" placeholder="Напишите сообщение… (шифруется на устройстве)" disabled></textarea>
-        <button class="btn primary" id="btn-send" disabled>Отправить</button>
-      </div>
-    </main>
-
-    <!-- ПРАВАЯ ПАНЕЛЬ: ключи, сигналинг, сейф -->
-    <aside class="right">
-      <div class="card">
-        <h3>🔐 Ключ учётной записи</h3>
-        <div class="hint">Создаётся в браузере. Приватный ключ хранится локально, зашифрован паролем.</div>
-        <div class="grid" style="margin-top:8px">
-          <input id="alias" class="input" placeholder="Ваш псевдоним" />
-          <input id="pass" class="input" type="password" placeholder="Пароль для ключа" />
+        <div class="ml-auto flex items-center gap-3 w-full sm:w-auto">
+          <input id="search" type="search" placeholder="Поиск по каталогу…" class="w-full sm:w-72 bg-white/10 placeholder-white/50 border border-white/10 focus:border-sky-400/60 rounded-xl px-3 py-2 outline-none"/>
+          <select id="categoryFilter" class="bg-white/10 border border-white/10 focus:border-sky-400/60 rounded-xl px-3 py-2 outline-none">
+            <option value="all">Все категории</option>
+          </select>
         </div>
-        <div class="grid" style="margin-top:8px">
-          <button class="btn" id="btn-gen">Создать ключ</button>
-          <button class="btn" id="btn-unlock">Разблокировать</button>
-        </div>
-        <div class="hint" id="key-status" style="margin-top:8px">Статус: нет ключа</div>
       </div>
 
-      <div class="card">
-        <h3>🌐 Ручной обмен SDP (WebRTC P2P)</h3>
-        <div class="hint">Никаких серверов для контента. Вставьте оффер/энсер в поля ниже, чтобы соединиться напрямую.</div>
-        <div style="margin-top:8px">
-          <button class="btn" id="btn-create-offer">Сформировать оффер</button>
-          <button class="btn" id="btn-apply-answer">Применить answer</button>
-        </div>
-        <textarea id="offer-out" class="input mono" style="margin-top:8px;height:120px" placeholder="Здесь появится JSON‑оффер (скопируйте и отправьте собеседнику)"></textarea>
-        <textarea id="answer-in" class="input mono" style="margin-top:8px;height:120px" placeholder="Вставьте JSON‑answer от собеседника и нажмите ‘Применить answer’"></textarea>
-        <hr style="border:none;border-top:1px solid var(--border);margin:12px 0" />
-        <textarea id="offer-in" class="input mono" style="margin-top:8px;height:120px" placeholder="Если вы второй участник: вставьте JSON‑offer от собеседника сюда"></textarea>
-        <div style="margin-top:8px">
-          <button class="btn" id="btn-accept-offer">Сформировать и показать answer</button>
-        </div>
-        <textarea id="answer-out" class="input mono" style="margin-top:8px;height:120px" placeholder="Скопируйте этот JSON‑answer и отправьте первому участнику"></textarea>
-      </div>
+      <div id="grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </div>
+  </section>
 
-      <div class="card">
-        <h3>🧰 Сейв‑чат (локальные заметки)</h3>
-        <div class="hint">Шифруется вашим паролем, хранится только в этом браузере.</div>
-        <input id="note-title" class="input" placeholder="Заголовок" style="margin-top:8px" />
-        <textarea id="note-body" class="input" style="height:100px;margin-top:8px" placeholder="Текст"></textarea>
-        <div class="grid" style="margin-top:8px">
-          <button class="btn" id="btn-save-note">Сохранить заметку</button>
-          <button class="btn danger" id="btn-clear-notes">Очистить все</button>
+  <!-- HOW IT WORKS -->
+  <section id="how" class="py-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="glass rounded-2xl p-6 border border-white/10 reveal">
+          <div class="text-sm uppercase tracking-wide text-white/60">Шаг 1</div>
+          <div class="text-xl font-bold mt-1">Соберите корзину</div>
+          <p class="text-white/70 mt-2">Выберите услуги из каталога, задайте количество. Корзина автоматически сохраняется в этом браузере.</p>
         </div>
-        <div id="notes" style="margin-top:8px"></div>
+        <div class="glass rounded-2xl p-6 border border-white/10 reveal">
+          <div class="text-sm uppercase tracking-wide text-white/60">Шаг 2</div>
+          <div class="text-xl font-bold mt-1">Получите ID</div>
+          <p class="text-white/70 mt-2">Каждая корзина получает номер формата 00001. Его видно в шапке и в окне оформления.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 border border-white/10 reveal">
+          <div class="text-sm uppercase tracking-wide text-white/60">Шаг 3</div>
+          <div class="text-xl font-bold mt-1">Отправьте заказ</div>
+          <p class="text-white/70 mt-2">Нажмите «Письмо продавцу» или «Через GitHub». В сообщении уже будет ID корзины и детали заказа.</p>
+        </div>
       </div>
+    </div>
+  </section>
 
-      <div class="card">
-        <h3>ℹ️ Замечания по безопасности</h3>
-        <ul class="hint">
-          <li>Контент шифруется <em>до</em> отправки (AES‑GCM 256). Ключ вырабатывается из ECDH(P‑256) → HKDF.</li>
-          <li>WebRTC канал шифруется DTLS, но мы добавляем своё E2EE поверх (двойная защита).</li>
-          <li>Для стабильности за NAT используйте TURN‑сервер (можно подключить позже).</li>
-          <li>Проверяйте «отпечаток безопасности» по голосу/встрече.</li>
-        </ul>
+  <!-- CONTACT -->
+  <section id="contact" class="py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="glass rounded-3xl p-8 border border-white/10 grid md:grid-cols-2 gap-6 items-center reveal">
+        <div>
+          <h3 class="text-2xl font-extrabold">Свяжитесь с нами</h3>
+          <p class="text-white/70 mt-2">Самый быстрый способ — GitHub. Откройте issue в репозитории и вставьте ID корзины.</p>
+          <div class="mt-4 flex items-center gap-3">
+            <a id="githubProfile" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 ripple" href="https://github.com/programmerpythona/adminstate.github.io">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.014c0 4.43 2.865 8.185 6.839 9.504.5.093.682-.217.682-.483 0-.237-.009-.866-.014-1.7-2.782.605-3.369-1.342-3.369-1.342-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.607.069-.607 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.833.091-.647.35-1.088.636-1.338-2.221-.253-4.555-1.112-4.555-4.948 0-1.092.39-1.987 1.03-2.688-.104-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.338 1.909-1.296 2.748-1.026 2.748-1.026.546 1.378.204 2.397.1 2.65.64.7 1.028 1.596 1.028 2.688 0 3.845-2.337 4.692-4.565 4.94.359.31.679.923.679 1.86 0 1.343-.012 2.427-.012 2.757 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.014C22 6.484 17.523 2 12 2Z" clip-rule="evenodd"/></svg>
+              <span>GitHub: adminstate.github.io</span>
+            </a>
+          </div>
+        </div>
+        <div class="text-sm text-white/70">
+          <div class="mb-3">E‑mail для заказов можно указать в коде (переменная <code class="px-1 rounded bg-white/10">SELLER_EMAIL</code>). Кнопка «Письмо продавцу» сформирует письмо с деталями.</div>
+          <div class="mb-3">Для абсолютной уникальности ID между всеми пользователями подключите серверless‑хранилище (Cloudflare Worker/Telegram/Google Sheets). В этой версии ID считается локально и сохраняется в браузере.</div>
+          <div>Развёртывание: положите этот файл как <code class="px-1 rounded bg-white/10">index.html</code> в репозиторий GitHub Pages, и всё готово.</div>
+        </div>
       </div>
-    </aside>
+    </div>
+  </section>
+
+  <!-- CART DRAWER -->
+  <aside id="cartDrawer" class="fixed top-0 right-0 h-screen w-full max-w-md translate-x-full transition-transform duration-300 z-50">
+    <div class="h-full flex flex-col bg-[#0b1220]/95 backdrop-blur-2xl border-l border-white/10">
+      <div class="p-4 flex items-center gap-3 border-b border-white/10">
+        <button id="closeCart" class="p-2 rounded-lg hover:bg-white/10">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M6 18 18 6M6 6l12 12"/></svg>
+        </button>
+        <div class="text-xl font-bold">Корзина</div>
+        <div class="ml-auto text-sm opacity-80">ID: <span id="cartIdText2" class="font-mono">00000</span></div>
+      </div>
+      <div class="p-4 overflow-auto grow" id="cartItems"></div>
+      <div class="p-4 border-t border-white/10 space-y-3">
+        <div class="flex justify-between text-white/80 text-sm"><span>Промежуточный итог</span><span id="subtotal">0€</span></div>
+        <div class="flex justify-between text-white/80 text-sm"><span>Скидка</span><span id="discount">0€</span></div>
+        <div class="flex justify-between text-lg font-extrabold"><span>Итого</span><span id="grandTotal">0€</span></div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button id="toEmail" class="rounded-xl bg-gradient-to-r from-indigo-500 to-sky-400 hover:from-indigo-400 hover:to-sky-300 px-4 py-2 font-semibold ripple">Письмо продавцу</button>
+          <a id="toGithub" target="_blank" class="rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 font-semibold text-center ripple">Через GitHub</a>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="copyOrder" class="rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 font-medium ripple">Скопировать заказ</button>
+          <button id="newCart" class="rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 font-medium ripple">Новая корзина</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] opacity-0 pointer-events-none transition">
+    <div class="glass border border-white/10 px-4 py-2 rounded-xl text-sm">Скопировано в буфер обмена</div>
   </div>
 
-<script>
-// ========= УТИЛИТЫ =========
-const $ = (id)=>document.getElementById(id);
-const enc = new TextEncoder();
-const dec = new TextDecoder();
+  <script>
+    // ======== CONFIG ========
+    const SELLER_EMAIL = ""; // ←← УКАЖИТЕ E‑MAIL ПРОДАВЦА (например: "orders@example.com"). Если пусто — кнопка письма предупредит об ошибке.
+    const GITHUB_OWNER = "programmerpythona"; // ← ваш GitHub user/org
+    const GITHUB_REPO  = "adminstate.github.io"; // ← ваш репозиторий для Issues
 
-const b64u = {
-  enc: (buf)=>{
-    let bin = Array.from(new Uint8Array(buf), x=>String.fromCharCode(x)).join("");
-    return btoa(bin).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
-  },
-  dec: (str)=>{
-    str = str.replaceAll('-','+').replaceAll('_','/');
-    const pad = str.length%4===2? '==': str.length%4===3? '=': '';
-    const bin = atob(str+pad);
-    const arr = new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
-    return arr.buffer;
-  }
-};
+    // ======== DATA ========
+    const CATEGORIES = [
+      { id: 'site',   name: 'Код сайта' },
+      { id: 'bot',    name: 'Telegram‑боты' },
+      { id: 'fx',     name: 'Анимации & Motion' },
+      { id: 'fix',    name: 'Исправление ошибок' },
+      { id: 'extra',  name: 'Доп. услуги' },
+    ];
 
-async function sha256(buf){
-  return await crypto.subtle.digest('SHA-256', buf);
-}
+    const PRODUCTS = [
+      { id:'site-landing', cat:'site', name:'Готовый лендинг (Next.js/Vite)', price:699, unit:'€', desc:'Адаптивный, SEO‑оптимизированный, подключение форм и аналитики.', tags:['Next.js','Tailwind','SEO'] },
+      { id:'site-shop', cat:'site', name:'Мини‑магазин (без бэкенда)', price:549, unit:'€', desc:'Статический магазин с корзиной, оплатой через виджет/ссылку.', tags:['Static','Stripe link'] },
+      { id:'bot-basic', cat:'bot', name:'Telegram‑бот: базовый', price:499, unit:'€', desc:'Команды, меню, простая логика. Развёртывание + инструкции.', tags:['Python','aiogram'] },
+      { id:'bot-pay', cat:'bot', name:'Telegram‑бот: оплата', price:799, unit:'€', desc:'Приём платежей, статусы заказов, админ‑панель в ТГ.', tags:['Payments','Webhook'] },
+      { id:'fx-hero', cat:'fx', name:'Анимации: hero‑сцена', price:240, unit:'€', desc:'Градиенты, параллакс, плавные появления, микро‑эффекты.', tags:['GSAP‑style','Parallax'] },
+      { id:'fx-lottie', cat:'fx', name:'Интеграция Lottie', price:180, unit:'€', desc:'Импорт и управление Lottie анимациями.', tags:['Lottie'] },
+      { id:'fix-bugs', cat:'fix', name:'Исправление ошибок в коде', price:60, unit:'€/час', desc:'Багфикс, hot‑fix, код‑ревью с рекомендациями.', tags:['Bugfix','Review'] },
+      { id:'fix-refactor', cat:'fix', name:'Рефакторинг + ускорение', price:380, unit:'€', desc:'Профилирование, оптимизации, снижение TTI/LCP.', tags:['Perf','Refactor'] },
+      { id:'extra-design', cat:'extra', name:'UI‑комплект (дизайн-система)', price:420, unit:'€', desc:'Набор компонентов, гайды по отступам, типографике.', tags:['UI Kit'] },
+      { id:'extra-cms', cat:'extra', name:'Интеграция CMS/Headless', price:460, unit:'€', desc:'Подключение контент‑панели (Sanity/Contentful).', tags:['CMS'] },
+    ];
 
-function hex(bytes){
-  return [...new Uint8Array(bytes)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+    // ======== STATE & STORAGE ========
+    const lastIdKey = 'mkp_last_id_seq';
+    const currentIdKey = 'mkp_current_cart_id';
+    let cartId = loadOrCreateCartId();
 
-function chunk(str,size){
-  const out=[];for(let i=0;i<str.length;i+=size) out.push(str.slice(i,i+size));return out.join(' ');
-}
+    function loadOrCreateCartId(){
+      let id = localStorage.getItem(currentIdKey);
+      if(!id){ id = nextId(); localStorage.setItem(currentIdKey, id); }
+      return id;
+    }
+    function nextId(){
+      let n = parseInt(localStorage.getItem(lastIdKey) || '0', 10) + 1;
+      localStorage.setItem(lastIdKey, String(n));
+      return String(n).padStart(5,'0');
+    }
 
-// ========= ХРАНИЛИЩЕ =========
-const store = {
-  get(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null}},
-  set(k,v){localStorage.setItem(k, JSON.stringify(v))},
-  del(k){localStorage.removeItem(k)}
-};
+    function cartStorageKey(){ return `mkp_cart_${cartId}`; }
 
-// ========= КЛЮЧИ УЧЁТКИ =========
-const KEY_SLOT = 'pg.account'; // { alias, pubJwk, privWrapped, salt, iv }
-let account = null; // {pubKey, privKey, alias, pubJwk, rk?}
+    function loadCart(){
+      try{ return JSON.parse(localStorage.getItem(cartStorageKey()) || '{}'); }
+      catch{ return {}; }
+    }
+    function saveCart(cart){ localStorage.setItem(cartStorageKey(), JSON.stringify(cart)); updateBadges(); }
 
-async function deriveKEK(password, salt){
-  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
-  return await crypto.subtle.deriveKey({name:'PBKDF2', hash:'SHA-256', salt, iterations:200000}, baseKey, {name:'AES-GCM', length:256}, false, ['wrapKey','unwrapKey']);
-}
+    let CART = loadCart(); // { [productId]: qty }
 
-async function createAccount(){
-  const alias = $('alias').value.trim() || 'user';
-  const pwd = $('pass').value;
-  if(pwd.length<6){alert('Пароль слишком короткий (≥6)');return}
-  const keyPair = await crypto.subtle.generateKey({name:'ECDH', namedCurve:'P-256'}, true, ['deriveBits']);
-  const pubJwk = await crypto.subtle.exportKey('jwk', keyPair.publicKey);
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const kek = await deriveKEK(pwd, salt);
-  const privWrapped = await crypto.subtle.wrapKey('jwk', keyPair.privateKey, kek, {name:'AES-GCM', iv});
-  store.set(KEY_SLOT, {alias, pubJwk, privWrapped:b64u.enc(privWrapped), salt:b64u.enc(salt), iv:b64u.enc(iv)});
-  $('key-status').textContent = 'Ключ создан и зашифрован';
-}
+    // ======== UTIL ========
+    const fmt = (n) => new Intl.NumberFormat('ru-RU', { style:'currency', currency:'EUR', maximumFractionDigits:0 }).format(n);
+    const byId = (id) => document.getElementById(id);
 
-async function unlockAccount(){
-  const data = store.get(KEY_SLOT);
-  if(!data){alert('Сначала создайте ключ');return}
-  const pwd = $('pass').value; if(!pwd){alert('Введите пароль');return}
-  const kek = await deriveKEK(pwd, b64u.dec(data.salt));
-  const privKey = await crypto.subtle.unwrapKey('jwk', b64u.dec(data.privWrapped), kek, {name:'AES-GCM', iv: b64u.dec(data.iv)}, {name:'ECDH', namedCurve:'P-256'}, true, ['deriveBits']);
-  const pubKey = await crypto.subtle.importKey('jwk', data.pubJwk, {name:'ECDH', namedCurve:'P-256'}, true, []);
-  account = { alias: data.alias, pubKey, privKey, pubJwk: data.pubJwk };
-  $('key-status').textContent = 'Ключ разблокирован';
-  updateStatus();
-}
+    function updateBadges(){
+      const count = Object.values(CART).reduce((a,b)=>a+b,0);
+      byId('cartCount').textContent = count;
+      byId('cartIdText').textContent = cartId;
+      byId('cartIdText2').textContent = cartId;
+      // Update totals
+      const subtotal = Object.entries(CART).reduce((sum,[pid,qty])=>{
+        const p = PRODUCTS.find(x=>x.id===pid); if(!p) return sum; const base = (p.unit==='€/час') ? p.price*qty : p.price*qty; return sum + base;
+      },0);
+      byId('subtotal').textContent = fmt(subtotal);
+      const discount = 0; // hook for future promos
+      byId('discount').textContent = fmt(discount);
+      byId('grandTotal').textContent = fmt(subtotal - discount);
+      // Update GitHub link
+      byId('toGithub').href = buildGithubIssueURL();
+    }
 
-$('btn-gen').onclick = createAccount;
-$('btn-unlock').onclick = unlockAccount;
-$('btn-lock').onclick = ()=>{account=null; $('key-status').textContent='Заблокировано'; updateStatus();};
+    function buildOrderLines(){
+      const lines = [
+        `Заказ MARKT∞ — Корзина #${cartId}`,
+        `Дата: ${new Date().toLocaleString('ru-RU')}`,
+        '',
+      ];
+      let i = 1, total = 0;
+      for(const [pid, qty] of Object.entries(CART)){
+        const p = PRODUCTS.find(x=>x.id===pid); if(!p) continue;
+        const priceInfo = p.unit==='€/час' ? `${p.price} €/час` : `${p.price} €`;
+        const rowTotal = (p.unit==='€/час') ? p.price*qty : p.price*qty;
+        total += rowTotal;
+        lines.push(`${i}. ${p.name} — ${qty} × ${priceInfo} = ${rowTotal} €`);
+        i++;
+      }
+      lines.push('', `Итого: ${total} €`, '', 'Пожалуйста, укажите этот ID в переписке, чтобы мы быстро нашли ваш заказ.');
+      return { text: lines.join('\n'), total };
+    }
 
-$('btn-export-pub').onclick = async ()=>{
-  if(!account){alert('Разблокируйте ключ');return}
-  const pub = JSON.stringify(account.pubJwk);
-  await navigator.clipboard.writeText(pub);
-  alert('Публичный ключ скопирован в буфер обмена');
-};
+    function buildMailto(){
+      const { text } = buildOrderLines();
+      const subject = `Заказ MARKT∞ — Корзина #${cartId}`;
+      return `mailto:${encodeURIComponent(SELLER_EMAIL)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+    }
 
-// ========= ДЕРИВАЦИЯ СЕССИИ =========
-let session = null; // {peerPubJwk, peerPubKey, rootKeyRaw(ArrayBuffer), counter}
+    function buildGithubIssueURL(){
+      const { text } = buildOrderLines();
+      const title = `Order #${cartId} — MARKT∞`;
+      return `https://github.com/${encodeURIComponent(GITHUB_OWNER)}/${encodeURIComponent(GITHUB_REPO)}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`;
+    }
 
-async function deriveShared(peerPubJwk){
-  const peerPubKey = await crypto.subtle.importKey('jwk', peerPubJwk, {name:'ECDH', namedCurve:'P-256'}, true, []);
-  const secret = await crypto.subtle.deriveBits({name:'ECDH', public: peerPubKey}, account.privKey, 256);
-  // salt = SHA256(sorted(pubX))
-  const myPub = enc.encode(JSON.stringify(account.pubJwk));
-  const theirPub = enc.encode(JSON.stringify(peerPubJwk));
-  const cat = new Uint8Array(myPub.byteLength + theirPub.byteLength);
-  if(b64u.enc(myPub) < b64u.enc(theirPub)) {cat.set(new Uint8Array(myPub),0);cat.set(new Uint8Array(theirPub),myPub.byteLength);} else {cat.set(new Uint8Array(theirPub),0);cat.set(new Uint8Array(myPub),theirPub.byteLength);}
-  const salt = await sha256(cat.buffer);
-  // HKDF extract+expand to 32 bytes root key
-  const base = await crypto.subtle.importKey('raw', secret, 'HKDF', false, ['deriveBits']);
-  const rk = await crypto.subtle.deriveBits({name:'HKDF', hash:'SHA-256', salt, info: enc.encode('parallelogram-v1')}, base, 256);
-  session = { peerPubJwk, peerPubKey, rootKeyRaw: rk, counter: 0, salt };
-  // safety number
-  const safety = await sha256(cat.buffer);
-  const fpr = chunk(hex(safety).slice(0,40), 8);
-  $('safety-num').textContent = fpr;
-}
+    function toast(){
+      const t = byId('toast'); t.style.opacity = '1'; t.style.pointerEvents = 'auto';
+      setTimeout(()=>{ t.style.opacity='0'; t.style.pointerEvents='none'; }, 1600);
+    }
 
-async function deriveMsgKey(i){
-  const base = await crypto.subtle.importKey('raw', session.rootKeyRaw, 'HKDF', false, ['deriveKey']);
-  return await crypto.subtle.deriveKey({name:'HKDF', hash:'SHA-256', salt: session.salt, info: enc.encode('msg-'+i)}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
-}
+    // ======== RENDER CATALOG ========
+    const grid = byId('grid');
+    const search = byId('search');
+    const categoryFilter = byId('categoryFilter');
 
-async function encryptMessage(plain){
-  const i = ++session.counter;
-  const key = await deriveMsgKey(i);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plain));
-  return { c: b64u.enc(ct), n: b64u.enc(iv), i };
-}
+    function renderCategoryOptions(){
+      for(const c of CATEGORIES){
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.name; categoryFilter.appendChild(opt);
+      }
+    }
 
-async function decryptMessage(env){
-  const key = await deriveMsgKey(env.i);
-  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv: b64u.dec(env.n)}, key, b64u.dec(env.c));
-  return dec.decode(pt);
-}
+    function card(product){
+      const { id, name, price, unit, desc, tags, cat } = product;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'glass rounded-2xl border border-white/10 p-5 reveal';
+      wrapper.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-sky-400 grid place-items-center shadow-lg shadow-indigo-700/30">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 7a2 2 0 012-2h6l6 6v7a2 2 0 01-2 2H6a2 2 0 01-2-2V7z"/></svg>
+          </div>
+          <div class="min-w-0 grow">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-lg leading-tight">${name}</h3>
+              <span class="text-xs text-white/60 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">${CATEGORIES.find(x=>x.id===cat)?.name||''}</span>
+            </div>
+            <p class="text-white/70 mt-1">${desc}</p>
+            <div class="flex flex-wrap gap-1.5 mt-2">${tags.map(t=>`<span class='text-xs text-white/70 px-2 py-0.5 rounded-full bg-white/5 border border-white/10'>${t}</span>`).join('')}</div>
+            <div class="mt-4 flex items-center justify-between">
+              <div class="text-xl font-extrabold">${unit==='€/час' ? price + ' ' + unit : price + ' €'}</div>
+              <button data-add="${id}" class="addBtn rounded-xl bg-white/10 hover:bg-white/15 px-4 py-2 font-semibold ripple">В корзину</button>
+            </div>
+          </div>
+        </div>`;
+      return wrapper;
+    }
 
-// ========= WEBRTC (ручной обмен) =========
-let pc=null, dc=null;
-function resetRTC(){ if(pc){ pc.close(); pc=null; } dc=null; $('rtc-state').textContent='WebRTC: —'; }
+    function renderGrid(){
+      grid.innerHTML = '';
+      const q = (search.value||'').trim().toLowerCase();
+      const cat = categoryFilter.value;
+      const list = PRODUCTS.filter(p=>{
+        const okCat = (cat==='all' || p.cat===cat);
+        const okQ = !q || [p.name,p.desc,...p.tags].join(' ').toLowerCase().includes(q);
+        return okCat && okQ;
+      });
+      for(const p of list){ grid.appendChild(card(p)); }
+      // attach listeners
+      grid.querySelectorAll('[data-add]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const pid = btn.getAttribute('data-add');
+          CART[pid] = (CART[pid]||0) + 1;
+          saveCart(CART);
+          btn.animate([{transform:'scale(1)'},{transform:'scale(.95)'},{transform:'scale(1)'}],{duration:220});
+        });
+      });
+      revealNow();
+      renderCartItems();
+    }
 
-function updateStatus(){
-  $('status-dot').style.background = account? 'var(--ok)':'#666';
-  $('msg-input').disabled = !dc || dc.readyState!=='open';
-  $('btn-send').disabled = !dc || dc.readyState!=='open';
-  $('chat-title').textContent = dc && dc.readyState==='open' ? 'Соединено' : 'Нет соединения';
-}
+    // ======== CART RENDER ========
+    const cartItemsEl = byId('cartItems');
 
-function onChannel(channel){
-  dc = channel;
-  dc.onopen = ()=>{ $('rtc-state').textContent='WebRTC: datachannel open'; $('msg-input').disabled=false; $('btn-send').disabled=false; };
-  dc.onclose = ()=>{ $('rtc-state').textContent='WebRTC: закрыто'; updateStatus(); };
-  dc.onmessage = async (ev)=>{
-    try{
-      const env = JSON.parse(ev.data);
-      const text = await decryptMessage(env);
-      addMsg(text, false);
-    }catch(e){ console.error('recv err', e); }
-  };
-  updateStatus();
-}
+    function renderCartItems(){
+      const entries = Object.entries(CART);
+      if(entries.length===0){
+        cartItemsEl.innerHTML = `<div class="text-white/60 text-sm">Корзина пуста. Добавьте что‑нибудь из каталога.</div>`;
+      } else {
+        cartItemsEl.innerHTML = entries.map(([pid,qty])=>{
+          const p = PRODUCTS.find(x=>x.id===pid); if(!p) return '';
+          const unitPrice = p.unit==='€/час' ? `${p.price} €/час` : `${p.price} €`;
+          return `
+          <div class="flex items-start gap-3 py-3 border-b border-white/10">
+            <div class="w-10 h-10 rounded-xl bg-white/5 grid place-items-center">🧩</div>
+            <div class="min-w-0 grow">
+              <div class="font-semibold leading-tight">${p.name}</div>
+              <div class="text-white/60 text-sm">${unitPrice}</div>
+              <div class="mt-2 flex items-center gap-2">
+                <button class="qtyBtn rounded-lg bg-white/10 hover:bg-white/15 px-2" data-dec="${pid}">−</button>
+                <span class="min-w-[2ch] text-center">${qty}</span>
+                <button class="qtyBtn rounded-lg bg-white/10 hover:bg-white/15 px-2" data-inc="${pid}">+</button>
+                <button class="ml-3 text-white/60 hover:text-white text-sm" data-del="${pid}">Удалить</button>
+              </div>
+            </div>
+            <div class="font-semibold">${p.unit==='€/час' ? (p.price*qty)+' €' : (p.price*qty)+' €'}</div>
+          </div>`;
+        }).join('');
+      }
+      // attach controls
+      cartItemsEl.querySelectorAll('[data-dec]').forEach(btn=>btn.addEventListener('click',()=>{
+        const id = btn.getAttribute('data-dec');
+        CART[id] = Math.max(0,(CART[id]||0)-1); if(CART[id]===0) delete CART[id]; saveCart(CART); renderCartItems();
+      }));
+      cartItemsEl.querySelectorAll('[data-inc]').forEach(btn=>btn.addEventListener('click',()=>{
+        const id = btn.getAttribute('data-inc'); CART[id] = (CART[id]||0)+1; saveCart(CART); renderCartItems();
+      }));
+      cartItemsEl.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click',()=>{
+        const id = btn.getAttribute('data-del'); delete CART[id]; saveCart(CART); renderCartItems();
+      }));
+      updateBadges();
+    }
 
-$('btn-new-session').onclick = ()=>{ resetRTC(); startOfferFlow(); };
+    // ======== REVEAL ON SCROLL ========
+    const io = new IntersectionObserver((entries)=>{
+      for(const e of entries){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }
+    },{threshold:.14});
+    function revealNow(){ document.querySelectorAll('.reveal').forEach(el=> io.observe(el)); }
 
-async function startOfferFlow(){
-  if(!account){alert('Сначала разблокируйте ключ');return}
-  pc = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
-  onChannel(pc.createDataChannel('pg-chat', {ordered:true}))
-  pc.onicegatheringstatechange = ()=>{ $('rtc-state').textContent = 'ICE: '+pc.iceGatheringState; };
-  pc.onconnectionstatechange = ()=>{ $('rtc-state').textContent = 'State: '+pc.connectionState; };
-  await pc.setLocalDescription(await pc.createOffer());
-  // ждём ICE gathering complete
-  await new Promise(r=>{ if(pc.iceGatheringState==='complete') return r(); pc.addEventListener('icegatheringstatechange',()=> pc.iceGatheringState==='complete' && r()); });
-  const offer = { sdp: pc.localDescription, pub: account.pubJwk, alias: account.alias };
-  $('offer-out').value = JSON.stringify(offer);
-}
+    // ======== DRAWER TOGGLE ========
+    const drawer = byId('cartDrawer');
+    function openCart(){ drawer.style.transform = 'translateX(0)'; }
+    function closeCart(){ drawer.style.transform = 'translateX(100%)'; }
 
-$('btn-apply-answer').onclick = async ()=>{
-  if(!pc){alert('Сначала создайте оффер');return}
-  try{
-    const ans = JSON.parse($('answer-in').value);
-    await pc.setRemoteDescription(ans.sdp);
-    await deriveShared(ans.pub);
-    updateStatus();
-  }catch(e){ alert('Некорректный answer'); }
-};
+    byId('cartBtn').addEventListener('click', openCart);
+    byId('showCartTop').addEventListener('click', openCart);
+    byId('closeCart').addEventListener('click', closeCart);
 
-$('btn-accept-offer').onclick = async ()=>{
-  if(!account){alert('Разблокируйте ключ');return}
-  try{
-    const off = JSON.parse($('offer-in').value);
-    pc = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
-    pc.ondatachannel = (e)=> onChannel(e.channel);
-    pc.onicegatheringstatechange = ()=>{ $('rtc-state').textContent = 'ICE: '+pc.iceGatheringState; };
-    pc.onconnectionstatechange = ()=>{ $('rtc-state').textContent = 'State: '+pc.connectionState; };
-    await pc.setRemoteDescription(off.sdp);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    await new Promise(r=>{ if(pc.iceGatheringState==='complete') return r(); pc.addEventListener('icegatheringstatechange',()=> pc.iceGatheringState==='complete' && r()); });
-    $('answer-out').value = JSON.stringify({ sdp: pc.localDescription, pub: account.pubJwk, alias: account.alias });
-    await deriveShared(off.pub);
-    updateStatus();
-  }catch(e){ alert('Некорректный offer'); console.error(e); }
-};
+    // ======== ACTION BUTTONS ========
+    byId('toEmail').addEventListener('click', ()=>{
+      if(!SELLER_EMAIL){ alert('E‑mail продавца не указан. Откройте код и задайте SELLER_EMAIL.'); return; }
+      window.location.href = buildMailto();
+    });
 
-// ========= СООБЩЕНИЯ =========
-function addMsg(text, mine){
-  const el = document.createElement('div');
-  el.className = 'bubble '+(mine?'me':'them');
-  el.innerHTML = `${text.replace(/</g,'&lt;')}` + `<span class="time">${new Date().toLocaleTimeString()}</span>`;
-  $('msgs').appendChild(el); $('msgs').scrollTop = $('msgs').scrollHeight;
-}
+    byId('toGithub').addEventListener('click', (e)=>{
+      // link already set via updateBadges(); keep here if we want extra checks
+      if(Object.keys(CART).length===0){ e.preventDefault(); alert('Корзина пуста. Добавьте хотя бы один товар.'); }
+    });
 
-$('btn-send').onclick = async ()=>{
-  const t = $('msg-input').value.trim(); if(!t) return;
-  if(!dc || dc.readyState!=='open'){ alert('Нет соединения'); return }
-  try{
-    const env = await encryptMessage(t);
-    dc.send(JSON.stringify(env));
-    addMsg(t, true);
-    $('msg-input').value='';
-  }catch(e){ alert('Ошибка шифрования/отправки'); console.error(e); }
-};
+    byId('copyOrder').addEventListener('click', async ()=>{
+      const { text } = buildOrderLines();
+      try{ await navigator.clipboard.writeText(text); toast(); }
+      catch{ alert('Не удалось скопировать.'); }
+    });
 
-// ========= СЕЙФ‑ЗАМЕТКИ =========
-const NOTE_SLOT='pg.notes';
-function listNotes(){
-  const box=$('notes'); box.innerHTML='';
-  const arr = store.get(NOTE_SLOT)||[];
-  for(const n of arr){
-    const d=document.createElement('div');
-    d.className='hint';
-    d.innerHTML = `<div class="mono">${n.title}</div><div>${n.body}</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"/>`;
-    box.appendChild(d);
-  }
-}
+    byId('newCart').addEventListener('click', ()=>{
+      // create new cart id, empty cart
+      cartId = nextId();
+      localStorage.setItem(currentIdKey, cartId);
+      CART = {}; saveCart(CART); renderCartItems(); updateBadges();
+    });
 
-async function saveNote(){
-  const title=$('note-title').value.trim();
-  const body=$('note-body').value.trim();
-  if(!title||!body){alert('Заполните заголовок и текст');return}
-  const pwd=$('pass').value; if(pwd.length<6){alert('Сначала задайте пароль вверху');return}
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const baseKey = await crypto.subtle.importKey('raw', enc.encode(pwd), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey({name:'PBKDF2', hash:'SHA-256', salt, iterations:150000}, baseKey, {name:'AES-GCM', length:256}, false, ['encrypt']);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(body));
-  const arr = store.get(NOTE_SLOT)||[];
-  arr.unshift({ title, blob: b64u.enc(ct), iv: b64u.enc(iv), salt: b64u.enc(salt) });
-  store.set(NOTE_SLOT, arr);
-  $('note-title').value=''; $('note-body').value='';
-  listNotes();
-}
-
-$('btn-save-note').onclick = saveNote;
-$('btn-clear-notes').onclick = ()=>{ if(confirm('Удалить все заметки?')){ store.del(NOTE_SLOT); listNotes(); } };
-
-listNotes();
-updateStatus();
-</script>
+    // ======== INIT ========
+    renderCategoryOptions();
+    renderGrid();
+    search.addEventListener('input', renderGrid);
+    categoryFilter.addEventListener('change', renderGrid);
+    updateBadges();
+    revealNow();
+  </script>
 </body>
 </html>
